@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -23,7 +24,6 @@ wheels/
 # Virtual Environment
 venv/
 ENV/
-env/
 
 # IDE
 .idea/
@@ -34,10 +34,12 @@ env/
 # Streamlit
 .streamlit/secrets.toml
 
-# Data files
+# Project specific
 data/*.json
 data/*.csv
-!data/.gitkeep
+*.log
+.env
+.env.local
 
 # Logs
 *.log

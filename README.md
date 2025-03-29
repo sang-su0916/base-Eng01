@@ -78,3 +78,78 @@ streamlit run app.py
 3. Commit your Changes
 4. Push to the Branch
 5. Open a Pull Request
+
+## 🚀 배포 방법
+
+### Streamlit Cloud 배포
+1. GitHub에 프로젝트를 푸시합니다.
+2. [Streamlit Cloud](https://share.streamlit.io/)에 접속합니다.
+3. GitHub 계정으로 로그인합니다.
+4. "New app" 버튼을 클릭합니다.
+5. 저장소, 브랜치, 메인 파일(app.py)을 선택합니다.
+6. "Deploy!" 버튼을 클릭합니다.
+
+### 로컬 실행
+1. Python 3.8 이상을 설치합니다.
+2. 가상환경을 생성하고 활성화합니다:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   ```
+3. 필요한 패키지를 설치합니다:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. 애플리케이션을 실행합니다:
+   ```bash
+   streamlit run app.py
+   ```
+
+## 🔧 환경 설정
+
+### 필수 환경 변수
+`.env` 파일을 생성하고 다음 변수들을 설정합니다:
+```
+OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+### Java 설치
+LanguageTool을 사용하기 위해 Java를 설치해야 합니다:
+- Windows: [Java JDK](https://adoptium.net/) 다운로드 및 설치
+- Linux: `sudo apt-get install default-jdk`
+- macOS: `brew install openjdk`
+
+## 📝 주요 기능
+
+### 👩‍🏫 선생님용 기능
+- 문제 출제 시스템
+- 학생별 문제 할당
+- 결과 확인 및 피드백
+- 통계 및 리포트
+
+### 👧 학생용 기능
+- 문제 풀이
+- 자동 채점
+- 첨삭 피드백
+- 학습 진도 추적
+
+## 🔒 보안
+- API 키는 환경 변수로 관리
+- 사용자 인증 시스템
+- 데이터 암호화
+
+## 📊 데이터 관리
+- JSON 파일 기반 데이터 저장
+- 자동 백업 시스템
+- 데이터 마이그레이션 도구
+
+## 🐛 알려진 이슈
+- LanguageTool 관련 Java 설치 필요
+- 일부 브라우저에서의 호환성 문제
+
+## 📈 향후 계획
+- 학생별 로그인 시스템
+- Google Sheet 연동
+- 통계 및 리포트 기능
+- 모바일 앱 개발
