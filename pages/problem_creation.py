@@ -5,9 +5,11 @@ import pandas as pd
 from datetime import datetime
 import io
 import json
+from utils.problem_generator import ProblemGenerator
 
 # 문제 관리자 초기화
 problem_manager = ProblemManager()
+problem_generator = ProblemGenerator()
 
 def github_sync_form():
     """GitHub 연동 폼을 표시합니다."""
@@ -75,102 +77,91 @@ def create_problem_form():
     """문제 생성 폼을 표시합니다."""
     st.subheader("새로운 문제 출제")
     
-    # GitHub 연동
-    github_sync_form()
+    # AI 문제 생성 섹션
+    st.subheader("🤖 AI 문제 생성")
+    if st.button("기본 문제 생성"):
+        with st.spinner("문제를 생성하는 중..."):
+            problems = problem_generator.generate_basic_problems()
+            for problem in problems:
+                problem_manager.add_problem(problem)
+            st.success(f"{len(problems)}개의 기본 문제가 생성되었습니다!")
     
     st.write("---")
     
-    # CSV 파일 업로드
-    st.write("### CSV 파일로 문제 업로드")
-    st.write("CSV 파일 형식: type,title,content,answer,keywords,difficulty")
-    uploaded_file = st.file_uploader("CSV 파일 선택", type="csv")
+    # 문제 입력 방식 선택
+    input_method = st.radio(
+        "문제 입력 방식을 선택하세요:",
+        ["직접 입력", "CSV 파일 업로드", "GitHub JSON 연동"]
+    )
     
-    if uploaded_file is not None:
-        try:
-            # CSV 파일 읽기
-            df = pd.read_csv(uploaded_file)
-            required_columns = ['type', 'title', 'content', 'answer', 'keywords', 'difficulty']
+    if input_method == "직접 입력":
+        with st.form("problem_form"):
+            st.subheader("문제 직접 입력")
             
-            # 필수 컬럼 확인
-            if not all(col in df.columns for col in required_columns):
-                st.error("CSV 파일에 필요한 모든 컬럼이 없습니다.")
-                return
+            title = st.text_input("제목")
+            problem_type = st.selectbox("유형", ["문법", "어휘", "독해", "영작문"])
+            difficulty = st.selectbox("난이도", ["초급", "중급", "고급"])
+            time_limit = st.number_input("제한시간(분)", min_value=1, value=15)
+            content = st.text_area("문제 내용")
+            keywords = st.text_input("키워드 (쉼표로 구분)")
+            model_answer = st.text_area("모범 답안")
             
-            # 데이터 미리보기
-            st.write("### 업로드된 문제 미리보기")
-            st.dataframe(df)
+            submitted = st.form_submit_button("문제 추가")
             
-            if st.button("문제 일괄 등록"):
-                success_count = 0
-                for _, row in df.iterrows():
-                    problem_data = {
-                        "type": row['type'],
-                        "title": row['title'],
-                        "content": row['content'],
-                        "answer": row['answer'],
-                        "keywords": [k.strip() for k in str(row['keywords']).split(",") if k.strip()],
-                        "difficulty": int(row['difficulty']),
-                        "created_at": datetime.now().isoformat()
-                    }
-                    if problem_manager.add_problem(problem_data):
-                        success_count += 1
+            if submitted:
+                problem = {
+                    "title": title,
+                    "type": problem_type,
+                    "difficulty": difficulty,
+                    "time_limit": time_limit,
+                    "content": content,
+                    "keywords": keywords,
+                    "model_answer": model_answer
+                }
                 
-                st.success(f"{success_count}개의 문제가 성공적으로 등록되었습니다!")
-                st.experimental_rerun()
+                if problem_manager.add_problem(problem):
+                    st.success("문제가 추가되었습니다!")
+                else:
+                    st.error("문제 추가 중 오류가 발생했습니다.")
+                    
+    elif input_method == "CSV 파일 업로드":
+        st.subheader("CSV 파일 업로드")
+        uploaded_file = st.file_uploader("CSV 파일을 선택하세요", type="csv")
+        
+        if uploaded_file is not None:
+            try:
+                df = pd.read_csv(uploaded_file)
+                problems = df.to_dict('records')
                 
-        except Exception as e:
-            st.error(f"파일 처리 중 오류가 발생했습니다: {str(e)}")
+                for problem in problems:
+                    problem_manager.add_problem(problem)
+                    
+                st.success(f"{len(problems)}개의 문제가 추가되었습니다!")
+            except Exception as e:
+                st.error(f"파일 처리 중 오류가 발생했습니다: {str(e)}")
+                
+    else:  # GitHub JSON 연동
+        st.subheader("GitHub JSON 연동")
+        repo_url = st.text_input("GitHub 저장소 URL")
+        json_path = st.text_input("JSON 파일 경로")
+        
+        if st.button("문제 가져오기"):
+            try:
+                # GitHub에서 JSON 파일 가져오기 로직
+                st.info("GitHub 연동 기능은 준비 중입니다...")
+            except Exception as e:
+                st.error(f"GitHub 연동 중 오류가 발생했습니다: {str(e)}")
     
+    # 현재 등록된 문제 목록 표시
     st.write("---")
-    st.write("### 직접 입력으로 문제 출제")
+    st.subheader("📝 등록된 문제 목록")
+    problems = problem_manager.get_all_problems()
     
-    with st.form("problem_form"):
-        # 문제 유형 선택
-        problem_type = st.selectbox(
-            "문제 유형",
-            ["단어", "문법", "독해", "회화"]
-        )
-        
-        # 문제 제목
-        title = st.text_input("문제 제목")
-        
-        # 문제 내용
-        content = st.text_area("문제 내용")
-        
-        # 정답
-        answer = st.text_area("정답")
-        
-        # 키워드 (쉼표로 구분)
-        keywords = st.text_input("키워드 (쉼표로 구분)")
-        
-        # 난이도
-        difficulty = st.slider("난이도", 1, 5, 3)
-        
-        # 제출 버튼
-        submitted = st.form_submit_button("문제 등록")
-        
-        if submitted:
-            if not title or not content or not answer:
-                st.error("필수 항목을 모두 입력해주세요.")
-                return
-            
-            # 문제 데이터 구성
-            problem_data = {
-                "type": problem_type,
-                "title": title,
-                "content": content,
-                "answer": answer,
-                "keywords": [k.strip() for k in keywords.split(",") if k.strip()],
-                "difficulty": difficulty,
-                "created_at": datetime.now().isoformat()
-            }
-            
-            # 문제 저장
-            if problem_manager.add_problem(problem_data):
-                st.success("문제가 성공적으로 등록되었습니다!")
-                st.experimental_rerun()
-            else:
-                st.error("문제 등록 중 오류가 발생했습니다.")
+    if problems:
+        df = pd.DataFrame(problems)
+        st.dataframe(df[["title", "type", "difficulty", "time_limit"]])
+    else:
+        st.info("등록된 문제가 없습니다.")
 
 def display_problems():
     """등록된 문제 목록을 표시합니다."""
